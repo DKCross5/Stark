@@ -8,3 +8,6 @@ __pycache__
 
 # macOS (things that help macOS set up)
 .DS_Store
+
+# Wifi password
+wifi_password.json
