@@ -1,0 +1,10 @@
+# remember to place the names of files/folders with SENSITIVE information here (e.g., wifi.txt)
+
+# Byte-compiled (setup/background files that python needs to run)
+__pycache__
+
+# VSCode (folder that stores settings for VSCode)
+.vscode
+
+# macOS (things that help macOS set up)
+.DS_Store
