@@ -1,6 +1,12 @@
 #!/usr/bin/env python
+# server cannot be changed unless killed then re-run (may be intensional)
+# import os
 
-# import websockets
+# if os.name == 'posix':
+#    os.system('clear')
+# else:
+#    os.system('cls')
+
 import asyncio
 
 from websockets.asyncio.server import serve
@@ -20,3 +26,4 @@ async def main():
 
 if __name__ == "__main__":
     asyncio.run(main())
+    
