@@ -4,10 +4,9 @@ import websockets
 from websockets.sync.client import connect
 
 def hello():
-    uri = "ws://localhost:8765"
-    with connect(uri) as websocket:
-        name = input("What's your name? ")
-
+    uri1 = "ws://localhost:8765"
+    with connect(uri1) as websocket:
+        name = "ESP2"
         websocket.send(name)
         print(f">>> {name}")
 

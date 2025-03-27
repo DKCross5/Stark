@@ -6,7 +6,7 @@ from websockets.sync.client import connect
 def hello():
     uri = "ws://localhost:8765"
     with connect(uri) as websocket:
-        name = input("What's your name? ")
+        name = "ESP1"
 
         websocket.send(name)
         print(f">>> {name}")
