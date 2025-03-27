@@ -4,27 +4,30 @@ import uuid
 
 clients = {}
 
-def get_names():
-    for num in clients:
-        print(f'{clients[num]}')
+async def get_names():
+    return clients.items()
 
-async def echo(websocket):
-    client_id = str(uuid.uuid4())
-    clients[client_id] = websocket
-    print(f"Client {client_id} connected")
+async def retrieve_names():
+    await asyncio.sleep(5) 
+    names = await get_names()
+    print("connected clients:", names)
+
+async def get_ID(websocket):
+    client_id_key = str(uuid.uuid4())
+    clients[client_id_key] = websocket
+    print(f"Client {client_id_key} connected")
     try:
-        async for message in websocket:
-            print(f"Received message from {client_id}: {message}")
-            await websocket.send(f"Echo from {client_id}: {message}")
+        async for name in websocket:
+            print(f"Received message from {client_id_key}: {name}")
+            await websocket.send(f"Hello: {name}")
     except websockets.ConnectionClosed:
-        print(f"Client {client_id} disconnected")
-    finally:
-        del clients[client_id]
+        print(f"Client {client_id_key} disconnected")
+   
 
 async def main():
-    server = await websockets.serve(echo, "localhost", 8765)
+    server = await websockets.serve(get_ID, "localhost", 8765)
+    asyncio.create_task(retrieve_names())
     await server.serve_forever()
-
+    
 if __name__ == "__main__":
     asyncio.run(main())
-     
