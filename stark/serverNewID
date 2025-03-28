@@ -9,9 +9,7 @@ async def get_names():
 async def retrieve_names():
     await asyncio.sleep(5) 
     names = await get_names()
-    print("connected clients:", names[0])
-    print("Pairs: ", names[1])
-
+    print("connected clients:", names)
 async def get_ID(websocket):
     client_id_key = str(uuid.uuid4())
     print(f"Client {client_id_key} connected")
