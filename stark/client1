@@ -2,19 +2,22 @@
 
 import websockets
 from websockets.sync.client import connect
+import json
+import asyncio
 
-def hello():
+async def hello():
     uri1 = "ws://localhost:8765"
-    with connect(uri1) as websocket:
+    async with websockets.connect(uri1) as websocket:
         name = "ESP2"
-        websocket.send(name)
-        print(f">>> {name}")
-
-        greeting = websocket.recv()
-        print(f"<<< {greeting}")
+        Identification = json.dumps({"name": 'ESP2'})
+        await websocket.send(Identification)
+        print(f"sent to server: {Identification}")
+        response = await websocket.recv()
+        data = json.loads(response)
+        print("Recieved from Server: ", data)
 
 if __name__ == "__main__":
-    hello()
+    asyncio.run(hello())
 
 # if __name__ == "__main__":
 #     for _ in range(5):  # Loop to run the function 5 times
