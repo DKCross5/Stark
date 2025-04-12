@@ -5,20 +5,19 @@ from websockets.sync.client import connect
 import json
 import asyncio
 
-async def hello():
+async def Send_Data():
     uri1 = "ws://localhost:8765"
     async with websockets.connect(uri1) as websocket:
         name = "ESP2"
-        Identification = json.dumps({"name": 'ESP2'})
-        await websocket.send(Identification)
-        print(f"sent to server: {Identification}")
-        response = await websocket.recv()
-        data = json.loads(response)
-        print("Recieved from Server: ", data)
+        data_strings = [
+            json.dumps({"name": name})
+        ]
+        for data in data_strings:
+            await websocket.send(data)
+            print(f"sent to server: {data}")
+            response = await websocket.recv()
+        print("Recieved from Server: ", json.loads(response))
 
 if __name__ == "__main__":
-    asyncio.run(hello())
+    asyncio.run(Send_Data())
 
-# if __name__ == "__main__":
-#     for _ in range(5):  # Loop to run the function 5 times
-#         hello()
