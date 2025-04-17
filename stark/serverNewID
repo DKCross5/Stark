@@ -2,6 +2,7 @@ import asyncio
 import websockets
 import uuid
 import json 
+import time
 
 clients = {}
 async def get_names():
@@ -16,17 +17,19 @@ async def get_ID(websocket):
     client_id_key = str(uuid.uuid4())
     try:
         print(f"Client {client_id_key} connected")
-        Identity = await websocket.recv()
-        processed_ID = json.loads(Identity)
-        print(f"Recieved from client: {processed_ID}")
-        response = json.dumps({"Status":"Success"})
-        await websocket.send(response)
-        clients[processed_ID["name"] +'-'+ client_id_key] = websocket
-        print(processed_ID["name"])
+        while True:
+            JSONRaw = await websocket.recv()
+            json_string = json.loads(JSONRaw)
+            print(f"Recieved from client: {json_string}")
+            response = json.dumps({"Status":"Success"})
+            await websocket.send(response)
+            clients[json_string["Name"] +'-'+ client_id_key] = websocket
+            print(json_string["Name"])  #prints: ESP2
+            time.sleep(1)
     except websockets.ConnectionClosed:
         print(f"Client {client_id_key} disconnected")
 async def main():
-    server = await websockets.serve(get_ID, "localhost", 8765)
+    server = await websockets.serve(get_ID, "localhost", 8765, ping_interval = None, ping_timeout=None)
     asyncio.create_task(retrieve_names())
     await server.serve_forever()
     

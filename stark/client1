@@ -1,23 +1,120 @@
-#!/usr/bin/env python
-
 import websockets
-from websockets.sync.client import connect
 import json
 import asyncio
+import time
+import board
+import digitalio
+import pwmio
+import time
+import rotaryio
+import math
+from ulab import numpy as np
 
-async def Send_Data():
+ 
+PWM_PIN = board.D2     
+DIR_PIN = board.D3
+
+enc = rotaryio.IncrementalEncoder(board.D7, board.D6)
+
+# Setup motor control
+pwm = pwmio.PWMOut(PWM_PIN, frequency=5000, duty_cycle = 0) #sets up PWM DNT
+
+#returns information from pin
+dir_pin = digitalio.DigitalInOut(DIR_PIN)
+dir_pin.direction = digitalio.Direction.OUTPUT          #outputs the direction back to the motor
+
+async def Process_Data():
     uri1 = "ws://localhost:8765"
-    async with websockets.connect(uri1) as websocket:
+    async with websockets.connect(uri1, ping_interval=None, ping_timeout=None) as websocket:
+
+        def getAngle(Theta):              #inputs specified angle and returns specified pulses needed
+            if Theta < 0:
+                Degrees = -Theta
+            return Degrees
+
+        def getDirection(Theta):          #grabs value of the specified angle you want and checks for direction
+            if Theta < 0:
+                Clockwise = True
+            else:
+                Clockwise = False
+            return Clockwise
+
+        def calc_position(position: float):
+            # takes position directly from encoder
+            return math.degrees(2 * math.pi * position / 1670)
+        
+        def getSpeed(Input):
+            if Input == 0:
+                Value = None
+            else:
+                Value = Input
+            return Value
+
+        def run_motor(speed, direction):
+            if direction:
+                dir_pin.value = True  # Set direction forward
+            else:
+                dir_pin.value = False  # Set direction backward
+
+            pwm.duty_cycle = int(speed * 65535)  #speed in terms of decimal where 0.50 is 50%
+
+        def RunMotor(velocity, angle):
+
+            def calc_rpm(pos, last_pos, start, end=None):
+                # take position and last_pos directly from encoder
+                # start is assumed to be in nanoseconds
+                if end is None:
+                    end = time.monotonic_ns()
+                time_elapsed = end - start
+                return (position - last_position) * 60E9 / time_elapsed / 1670
+
+            all_rpms = []
+            speed_motor = velocity   #ranges from -1.0 to +1.0
+            Angle_motor = angle
+
+            last_position = enc.position
+            start = time.monotonic_ns()
+            counter = 0
+
+            run_motor(speed_motor, getDirection(Angle_motor))
+
+            while True:
+                position = enc.position
+                if Angle_motor < 0:
+                    if calc_position(position) < Angle_motor:
+                        end = time.monotonic_ns()
+                        break
+                else:
+                    if calc_position(position) > Angle_motor:
+                        end = time.monotonic_ns()
+                        break
+                if position != last_position:
+                    all_rpms.append(calc_rpm(position, last_position, start))
+                    start = time.monotonic_ns()
+                    last_position = position
+                    counter += 1
+
+
+            print(f"{end - start} nanoseconds elapsed, or in other words {(end - start)/1000000000}")
+            print(f"{calc_rpm(position, last_position, start, end)} RPM")
+            print(f"{position - last_position}")
+            print(f"Current position {calc_position(position)}°")
+            all_rpms = np.array(all_rpms)
+            print(f"{np.mean(all_rpms)=} RPM")
+            print(f"{all_rpms.size=}")
+            print(f"loop ran {counter} times")
         name = "ESP2"
-        data_strings = [
-            json.dumps({"name": name})
-        ]
-        for data in data_strings:
-            await websocket.send(data)
-            print(f"sent to server: {data}")
-            response = await websocket.recv()
-        print("Recieved from Server: ", json.loads(response))
+        position = 0
+        def get_new_position(x):
+            x = x + 1
+            return x
+        while True:
+            json_txt = {"Name": name, "Position": position}
+            json_send = json.dumps(json_txt)
+            await websocket.send(json_send)
+            print(f"sent to server: {json_send}")
+            position = get_new_position(position)
+            await asyncio.sleep(1)
 
 if __name__ == "__main__":
-    asyncio.run(Send_Data())
-
+    asyncio.run(Process_Data())
